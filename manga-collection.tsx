@@ -514,7 +514,7 @@ export default function MangaCollection() {
 
           {/* Search and Actions */}
           <div className="flex flex-col space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -526,54 +526,22 @@ export default function MangaCollection() {
                 />
               </div>
 
-              <div className="flex gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="border-purple-200 hover:bg-purple-50"
+                  className="border-purple-200 hover:bg-purple-50 w-full"
                   disabled={loading}
                 >
                   <Filter className="h-4 w-4 mr-2" />
                   Filter {activeFiltersCount > 0 && <Badge className="ml-2 bg-purple-500">{activeFiltersCount}</Badge>}
                 </Button>
 
-                {selectedMangas.length > 0 && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="bg-red-500 hover:bg-red-600"
-                        disabled={loading}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {selectedMangas.length} löschen
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Manga löschen</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Möchtest du wirklich {selectedMangas.length} Manga löschen? Diese Aktion kann nicht rückgängig
-                          gemacht werden.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleBulkDelete} className="bg-red-500 hover:bg-red-600">
-                          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                          Löschen
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-
                 <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="border-blue-200 hover:bg-blue-50" disabled={loading}>
+                    <Button variant="outline" className="border-blue-200 hover:bg-blue-50 w-full" disabled={loading}>
                       <Upload className="h-4 w-4 mr-2" />
-                      Excel Import
+                      <span>Excel Import</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md">
@@ -614,9 +582,9 @@ export default function MangaCollection() {
                 {/* ISBN Scanner Dialog */}
                 <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="border-green-200 hover:bg-green-50" disabled={loading}>
+                    <Button variant="outline" className="border-green-200 hover:bg-green-50 w-full" disabled={loading}>
                       <Barcode className="h-4 w-4 mr-2" />
-                      ISBN Scannen
+                      <span>ISBN Scannen</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -630,11 +598,11 @@ export default function MangaCollection() {
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
-                      className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 shadow-lg"
+                      className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 shadow-lg w-full"
                       disabled={loading}
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Manga hinzufügen
+                      <span>Manga hinzufügen</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -833,6 +801,38 @@ export default function MangaCollection() {
                   </DialogContent>
                 </Dialog>
               </div>
+
+              {selectedMangas.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="bg-red-500 hover:bg-red-600 w-full"
+                      disabled={loading}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {selectedMangas.length} Manga löschen
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Manga löschen</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Möchtest du wirklich {selectedMangas.length} Manga löschen? Diese Aktion kann nicht rückgängig
+                        gemacht werden.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleBulkDelete} className="bg-red-500 hover:bg-red-600">
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        Löschen
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
 
             {/* Filter Panel */}
