@@ -44,6 +44,8 @@ import {
   RefreshCw,
   Camera,
   Barcode,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useManga } from "@/hooks/useManga"
@@ -114,6 +116,23 @@ export default function MangaCollection() {
     newbuy: false,
   })
 
+  const [page, setPage] = useState(1)
+  const pageSize = 20
+
+  const totalPages = Math.ceil(total / pageSize)
+
+  const nextPage = () => {
+    if (page < totalPages) {
+      setPage((prev) => prev + 1)
+    }
+  }
+
+  const prevPage = () => {
+    if (page > 1) {
+      setPage((prev) => prev - 1)
+    }
+  }
+
   // Filter options from existing data
   const filterOptions = useMemo(() => {
     const genres = [...new Set(mangas.flatMap((m) => m.genre.split(",").map((g) => g.trim())).filter(Boolean))]
@@ -131,8 +150,19 @@ export default function MangaCollection() {
   useEffect(() => {
     const activeFilters = Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== ""))
 
-    fetchMangas(activeFilters, searchTerm)
-  }, [filters, searchTerm, fetchMangas])
+    // Use a timeout to debounce the search
+    const timeoutId = setTimeout(() => {
+      fetchMangas(activeFilters, searchTerm, page, pageSize)
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [filters, searchTerm, page, pageSize]) // Remove fetchMangas from dependencies
+
+  // Separate effect for page changes
+  useEffect(() => {
+    const activeFilters = Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== ""))
+    fetchMangas(activeFilters, searchTerm, page, pageSize)
+  }, [page]) // Only depend on page changes
 
   // Clear all filters
   const clearFilters = () => {
@@ -1399,6 +1429,96 @@ export default function MangaCollection() {
               </div>
             )}
           </CardContent>
+          {!loading && mangas.length > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-purple-100">
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <span>
+                  Seite {page} von {totalPages} ({total} Manga gesamt)
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={prevPage}
+                  disabled={page === 1 || loading}
+                  className="border-purple-200 hover:bg-purple-50"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Zurück
+                </Button>
+
+                <div className="flex items-center space-x-1">
+                  {/* Erste Seite */}
+                  {page > 3 && (
+                    <>
+                      <Button
+                        variant={page === 1 ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(1)}
+                        disabled={loading}
+                        className="w-10 h-8 border-purple-200 hover:bg-purple-50"
+                      >
+                        1
+                      </Button>
+                      {page > 4 && <span className="text-muted-foreground">...</span>}
+                    </>
+                  )}
+
+                  {/* Aktuelle Seiten-Umgebung */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i
+                    if (pageNum > totalPages) return null
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={page === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(pageNum)}
+                        disabled={loading}
+                        className={`w-10 h-8 ${
+                          page === pageNum
+                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                            : "border-purple-200 hover:bg-purple-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </Button>
+                    )
+                  })}
+
+                  {/* Letzte Seite */}
+                  {page < totalPages - 2 && (
+                    <>
+                      {page < totalPages - 3 && <span className="text-muted-foreground">...</span>}
+                      <Button
+                        variant={page === totalPages ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(totalPages)}
+                        disabled={loading}
+                        className="w-10 h-8 border-purple-200 hover:bg-purple-50"
+                      >
+                        {totalPages}
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={nextPage}
+                  disabled={page === totalPages || loading}
+                  className="border-purple-200 hover:bg-purple-50"
+                >
+                  Weiter
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </div>

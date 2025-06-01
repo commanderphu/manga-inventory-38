@@ -22,7 +22,7 @@ interface UseMangaReturn {
   stats: any
 
   // Actions
-  fetchMangas: (filters?: Partial<Filters>, searchTerm?: string) => Promise<void>
+  fetchMangas: (filters?: Partial<Filters>, searchTerm?: string, pageNum?: number, pageSize?: number) => Promise<void>
   createManga: (manga: CreateMangaRequest) => Promise<void>
   updateManga: (id: string, manga: UpdateMangaRequest) => Promise<void>
   deleteManga: (id: string) => Promise<void>
@@ -46,15 +46,15 @@ export function useManga(): UseMangaReturn {
   const [stats, setStats] = useState<any>(null)
 
   const fetchMangas = useCallback(
-    async (filters?: Partial<Filters>, searchTerm?: string) => {
+    async (filters?: Partial<Filters>, searchTerm?: string, pageNum?: number, pageSize?: number) => {
       setLoading(true)
       setError(null)
 
       try {
         const params = {
-          page,
-          limit: 50,
-          search: searchTerm,
+          page: pageNum || page,
+          limit: pageSize || 20,
+          search: searchTerm || "",
           ...filters,
         }
 
@@ -183,12 +183,7 @@ export function useManga(): UseMangaReturn {
     }
   }, [page])
 
-  // Fetch data on mount and when page changes
-  useEffect(() => {
-    fetchMangas()
-  }, [fetchMangas])
-
-  // Fetch stats on mount
+  // Fetch stats on mount only
   useEffect(() => {
     fetchStats()
   }, [fetchStats])
