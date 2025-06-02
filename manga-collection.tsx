@@ -1578,48 +1578,58 @@ function MangaCollectionContent() {
             )}
           </CardContent>
           {!loading && mangas.length > 0 && totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-purple-100">
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 py-4 border-t border-purple-100 gap-4">
+              {/* Info Text - versteckt auf sehr kleinen Bildschirmen */}
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-muted-foreground">
                 <span>
                   Seite {page} von {totalPages} ({total} Manga gesamt)
                 </span>
               </div>
 
-              <div className="flex items-center space-x-2">
+              {/* Mobile Info - nur auf kleinen Bildschirmen */}
+              <div className="sm:hidden text-xs text-muted-foreground">
+                {page}/{totalPages}
+              </div>
+
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                {/* Zurück Button */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={prevPage}
                   disabled={page === 1 || loading}
-                  className="border-purple-200 hover:bg-purple-50"
+                  className="border-purple-200 hover:bg-purple-50 h-8 px-2 sm:px-3"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Zurück
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-1">Zurück</span>
                 </Button>
 
+                {/* Seitenzahlen - angepasst für mobile */}
                 <div className="flex items-center space-x-1">
-                  {/* Erste Seite */}
-                  {page > 3 && (
-                    <>
+                  {/* Erste Seite - nur auf Desktop wenn weit entfernt */}
+                  {page > 4 && (
+                    <div className="hidden sm:flex items-center space-x-1">
                       <Button
-                        variant={page === 1 ? "default" : "outline"}
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           setPage(1)
                           updateURL(filters, searchTerm, sortConfig, 1)
                         }}
                         disabled={loading}
-                        className="w-7 md:w-10 h-8 border-purple-200 hover:bg-purple-50"
+                        className="w-8 h-8 border-purple-200 hover:bg-purple-50"
                       >
                         1
                       </Button>
-                      {page > 4 && <span className="text-muted-foreground">...</span>}
-                    </>
+                      <span className="text-muted-foreground">...</span>
+                    </div>
                   )}
 
-                  {/* Aktuelle Seiten-Umgebung */}
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i
+                  {/* Aktuelle Seiten-Umgebung - weniger auf mobile */}
+                  {Array.from({ length: window.innerWidth < 640 ? 3 : 5 }, (_, i) => {
+                    const maxPages = window.innerWidth < 640 ? 3 : 5
+                    const pageNum =
+                      Math.max(1, Math.min(totalPages - maxPages + 1, page - Math.floor(maxPages / 2))) + i
                     if (pageNum > totalPages) return null
 
                     return (
@@ -1632,7 +1642,7 @@ function MangaCollectionContent() {
                           updateURL(filters, searchTerm, sortConfig, pageNum)
                         }}
                         disabled={loading}
-                        className={`w-7 md:w-10 h-8 ${
+                        className={`w-8 h-8 text-xs sm:text-sm ${
                           page === pageNum
                             ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
                             : "border-purple-200 hover:bg-purple-50"
@@ -1643,35 +1653,36 @@ function MangaCollectionContent() {
                     )
                   })}
 
-                  {/* Letzte Seite */}
-                  {page < totalPages - 2 && (
-                    <>
-                      {page < totalPages - 3 && <span className="text-muted-foreground">...</span>}
+                  {/* Letzte Seite - nur auf Desktop wenn weit entfernt */}
+                  {page < totalPages - 3 && (
+                    <div className="hidden sm:flex items-center space-x-1">
+                      <span className="text-muted-foreground">...</span>
                       <Button
-                        variant={page === totalPages ? "default" : "outline"}
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           setPage(totalPages)
                           updateURL(filters, searchTerm, sortConfig, totalPages)
                         }}
                         disabled={loading}
-                        className="w-7 md:w-10 h-8 border-purple-200 hover:bg-purple-50"
+                        className="w-8 h-8 border-purple-200 hover:bg-purple-50"
                       >
                         {totalPages}
                       </Button>
-                    </>
+                    </div>
                   )}
                 </div>
 
+                {/* Weiter Button */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={nextPage}
                   disabled={page === totalPages || loading}
-                  className="border-purple-200 hover:bg-purple-50"
+                  className="border-purple-200 hover:bg-purple-50 h-8 px-2 sm:px-3"
                 >
-                  Weiter
-                  <ChevronRight className="h-4 w-4 ml-1" />
+                  <span className="hidden sm:inline mr-1">Weiter</span>
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
