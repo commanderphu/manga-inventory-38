@@ -7,19 +7,9 @@ export const metadata: Metadata = {
   description: " A completed Manga -Collection with Xecel Import and ISBN Sanner",
   generator: "v0.dev",
   icons: {
-    icon: [
-      {
-        url: "/favicon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: [
-      {
-        url: "/icon.png",
-        sizes: "32x32",
-        type: "image/png",
-      },
-    ],
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
 }
 
@@ -31,8 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icon.png" />
+        <link rel="icon" href="/favicon.png" type="image/svg+xml" />
       </head>
       <body>{children}</body>
     </html>
