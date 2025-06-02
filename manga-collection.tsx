@@ -32,9 +32,6 @@ import {
   Copy,
   ShoppingCart,
   Upload,
-  Edit,
-  Trash2,
-  MoreHorizontal,
   Filter,
   X,
   Star,
@@ -46,14 +43,16 @@ import {
   Barcode,
   ChevronLeft,
   ChevronRight,
+  Trash2,
+  MoreHorizontal,
 } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useManga } from "@/hooks/useManga"
 import type { Manga, CreateMangaRequest } from "@/lib/api"
 import { mangaAPI } from "@/lib/api"
 import { SimpleISBNScanner } from "@/components/simple-isbn-scanner"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface Filters {
   genre: string
@@ -483,21 +482,6 @@ function MangaCollectionContent() {
       setImportStatus({
         type: "error",
         message: "Fehler beim Importieren der Excel-Datei. Bitte überprüfe das Format. 😅",
-      })
-    }
-  }
-
-  const toggleCheckbox = async (id: string, field: "read" | "double" | "newbuy") => {
-    const manga = mangas.find((m) => m.id === id)
-    if (!manga) return
-
-    try {
-      await updateManga(id, { [field]: !manga[field] })
-      await fetchStats()
-    } catch (error) {
-      setImportStatus({
-        type: "error",
-        message: "Fehler beim Aktualisieren des Status! 😅",
       })
     }
   }
@@ -1430,7 +1414,6 @@ function MangaCollectionContent() {
                       <TableHead className="font-semibold text-purple-700">ISBN</TableHead>
                       <TableHead className="font-semibold text-purple-700">Sprache</TableHead>
                       <TableHead className="font-semibold text-purple-700">Status</TableHead>
-                      <TableHead className="w-20 font-semibold text-purple-700">Aktionen</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1469,17 +1452,32 @@ function MangaCollectionContent() {
                           </Link>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="border-purple-200 text-purple-700">
-                            Band {manga.band}
-                          </Badge>
+                          {manga.band ? (
+                            <Badge
+                              variant="outline"
+                              className="bg-purple-50 border-purple-300 text-purple-700 font-medium px-2.5 py-1"
+                            >
+                              Band {manga.band}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground italic">-</span>
+                          )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {manga.genre.split(",").map((g, i) => (
-                              <Badge key={i} variant="secondary" className="text-xs bg-pink-100 text-pink-700">
-                                {g.trim()}
-                              </Badge>
-                            ))}
+                          <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                            {manga.genre ? (
+                              manga.genre.split(",").map((g, i) => (
+                                <Badge
+                                  key={i}
+                                  variant="secondary"
+                                  className="text-xs bg-gradient-to-r from-pink-100 to-purple-100 text-pink-700 shadow-sm"
+                                >
+                                  {g.trim()}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-muted-foreground italic">-</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -1495,73 +1493,49 @@ function MangaCollectionContent() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-col space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={manga.read}
-                                onCheckedChange={() => toggleCheckbox(manga.id, "read")}
-                                disabled={loading}
-                              />
-                              <span className="text-sm">Gelesen ⭐</span>
+                          <div className="flex flex-col space-y-1.5">
+                            <div className="flex items-center gap-1.5">
+                              {manga.read ? (
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                  <span className="text-sm text-green-700 font-medium">Gelesen</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                                  <span className="text-sm text-gray-500">Ungelesen</span>
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={manga.double}
-                                onCheckedChange={() => toggleCheckbox(manga.id, "double")}
-                                disabled={loading}
-                              />
-                              <span className="text-sm">Doppelt 📚</span>
+
+                            <div className="flex items-center gap-1.5">
+                              {manga.double ? (
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                                  <span className="text-sm text-orange-700 font-medium">Doppelt</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                                  <span className="text-sm text-gray-500">Einzeln</span>
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={manga.newbuy}
-                                onCheckedChange={() => toggleCheckbox(manga.id, "newbuy")}
-                                disabled={loading}
-                              />
-                              <span className="text-sm">Neu kaufen 🛒</span>
+
+                            <div className="flex items-center gap-1.5">
+                              {manga.newbuy ? (
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                                  <span className="text-sm text-purple-700 font-medium">Kaufen</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                                  <span className="text-sm text-gray-500">Nicht kaufen</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="hover:bg-purple-100" disabled={loading}>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditManga(manga)}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Bearbeiten
-                              </DropdownMenuItem>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Löschen
-                                  </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Manga löschen</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Möchtest du "{manga.titel}" wirklich löschen? Diese Aktion kann nicht rückgängig
-                                      gemacht werden.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteManga(manga.id)}
-                                      className="bg-red-500 hover:bg-red-600"
-                                    >
-                                      Löschen
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
