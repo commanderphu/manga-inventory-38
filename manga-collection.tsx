@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useMemo, useEffect } from "react"
+import { useState, useRef, useMemo, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -52,6 +52,8 @@ import { useManga } from "@/hooks/useManga"
 import type { Manga, CreateMangaRequest } from "@/lib/api"
 import { mangaAPI } from "@/lib/api"
 import { SimpleISBNScanner } from "@/components/simple-isbn-scanner"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 
 interface Filters {
   genre: string
@@ -62,7 +64,15 @@ interface Filters {
   band: string
 }
 
+interface SortConfig {
+  key: keyof Manga | null
+  direction: "asc" | "desc" | null
+}
+
 export default function MangaCollection() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const {
     mangas,
     loading,
@@ -78,7 +88,7 @@ export default function MangaCollection() {
     fetchStats,
   } = useManga()
 
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
@@ -94,12 +104,17 @@ export default function MangaCollection() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [filters, setFilters] = useState<Filters>({
-    genre: "",
-    autor: "",
-    verlag: "",
-    sprache: "",
-    status: "",
-    band: "",
+    genre: searchParams.get("genre") || "",
+    autor: searchParams.get("autor") || "",
+    verlag: searchParams.get("verlag") || "",
+    sprache: searchParams.get("sprache") || "",
+    status: searchParams.get("status") || "",
+    band: searchParams.get("band") || "",
+  })
+
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    key: (searchParams.get("sort") as keyof Manga) || null,
+    direction: (searchParams.get("direction") as "asc" | "desc") || null,
   })
 
   const [newManga, setNewManga] = useState<CreateMangaRequest>({
@@ -116,20 +131,69 @@ export default function MangaCollection() {
     newbuy: false,
   })
 
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(Number(searchParams.get("page")) || 1)
   const pageSize = 20
 
   const totalPages = Math.ceil(total / pageSize)
 
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams)
+      params.set(name, value)
+
+      // Reset page to 1 when filters or search changes
+      if (name !== "page") {
+        params.set("page", "1")
+      }
+
+      return params.toString()
+    },
+    [searchParams],
+  )
+
+  const updateURL = useCallback(
+    (newFilters: Filters, newSearchTerm: string, newSortConfig: SortConfig, newPage: number) => {
+      const params = new URLSearchParams()
+
+      // Set filters
+      Object.entries(newFilters).forEach(([key, value]) => {
+        if (value) {
+          params.set(key, value)
+        }
+      })
+
+      // Set search term
+      if (newSearchTerm) {
+        params.set("search", newSearchTerm)
+      }
+
+      // Set sort config
+      if (newSortConfig.key && newSortConfig.direction) {
+        params.set("sort", newSortConfig.key.toString())
+        params.set("direction", newSortConfig.direction)
+      }
+
+      // Set page
+      if (newPage > 1) {
+        params.set("page", newPage.toString())
+      }
+
+      router.push(`?${params.toString()}`, { scroll: false })
+    },
+    [router],
+  )
+
   const nextPage = () => {
     if (page < totalPages) {
       setPage((prev) => prev + 1)
+      updateURL(filters, searchTerm, sortConfig, page + 1)
     }
   }
 
   const prevPage = () => {
     if (page > 1) {
       setPage((prev) => prev - 1)
+      updateURL(filters, searchTerm, sortConfig, page - 1)
     }
   }
 
@@ -152,16 +216,16 @@ export default function MangaCollection() {
 
     // Use a timeout to debounce the search
     const timeoutId = setTimeout(() => {
-      fetchMangas(activeFilters, searchTerm, page, pageSize)
+      fetchMangas(activeFilters, searchTerm, page, pageSize, sortConfig.key, sortConfig.direction)
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [filters, searchTerm, page, pageSize]) // Remove fetchMangas from dependencies
+  }, [filters, searchTerm, page, pageSize, sortConfig]) // Remove fetchMangas from dependencies
 
   // Separate effect for page changes
   useEffect(() => {
     const activeFilters = Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== ""))
-    fetchMangas(activeFilters, searchTerm, page, pageSize)
+    fetchMangas(activeFilters, searchTerm, page, pageSize, sortConfig.key, sortConfig.direction)
   }, [page]) // Only depend on page changes
 
   // Clear all filters
@@ -175,6 +239,20 @@ export default function MangaCollection() {
       band: "",
     })
     setSearchTerm("")
+    setSortConfig({ key: null, direction: null })
+    updateURL(
+      {
+        genre: "",
+        autor: "",
+        verlag: "",
+        sprache: "",
+        status: "",
+        band: "",
+      },
+      "",
+      { key: null, direction: null },
+      1,
+    )
   }
 
   // Count active filters
@@ -447,6 +525,24 @@ export default function MangaCollection() {
     </div>
   )
 
+  const handleSort = (key: keyof Manga) => {
+    let direction: "asc" | "desc" = "asc"
+
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc"
+    }
+
+    setSortConfig({ key, direction })
+    updateURL(filters, searchTerm, { key, direction }, page)
+  }
+
+  const getSortIndicator = (key: keyof Manga) => {
+    if (sortConfig.key === key) {
+      return sortConfig.direction === "asc" ? "▲" : "▼"
+    }
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50">
       <div className="container mx-auto p-6 space-y-6">
@@ -550,7 +646,10 @@ export default function MangaCollection() {
                 <Input
                   placeholder="Suche nach Titel, Autor oder Genre... 🔍"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value)
+                    updateURL(filters, e.target.value, sortConfig, 1)
+                  }}
                   className="pl-10 border-2 border-purple-200 focus:border-purple-400 shadow-sm"
                   disabled={loading}
                 />
@@ -894,7 +993,10 @@ export default function MangaCollection() {
                       <Label>Genre</Label>
                       <Select
                         value={filters.genre}
-                        onValueChange={(value) => setFilters({ ...filters, genre: value })}
+                        onValueChange={(value) => {
+                          setFilters({ ...filters, genre: value })
+                          updateURL({ ...filters, genre: value }, searchTerm, sortConfig, 1)
+                        }}
                         disabled={loading}
                       >
                         <SelectTrigger className="border-purple-200">
@@ -915,7 +1017,10 @@ export default function MangaCollection() {
                       <Label>Autor</Label>
                       <Select
                         value={filters.autor}
-                        onValueChange={(value) => setFilters({ ...filters, autor: value })}
+                        onValueChange={(value) => {
+                          setFilters({ ...filters, autor: value })
+                          updateURL({ ...filters, autor: value }, searchTerm, sortConfig, 1)
+                        }}
                         disabled={loading}
                       >
                         <SelectTrigger className="border-purple-200">
@@ -936,7 +1041,10 @@ export default function MangaCollection() {
                       <Label>Verlag</Label>
                       <Select
                         value={filters.verlag}
-                        onValueChange={(value) => setFilters({ ...filters, verlag: value })}
+                        onValueChange={(value) => {
+                          setFilters({ ...filters, verlag: value })
+                          updateURL({ ...filters, verlag: value }, searchTerm, sortConfig, 1)
+                        }}
                         disabled={loading}
                       >
                         <SelectTrigger className="border-purple-200">
@@ -957,7 +1065,10 @@ export default function MangaCollection() {
                       <Label>Sprache</Label>
                       <Select
                         value={filters.sprache}
-                        onValueChange={(value) => setFilters({ ...filters, sprache: value })}
+                        onValueChange={(value) => {
+                          setFilters({ ...filters, sprache: value })
+                          updateURL({ ...filters, sprache: value }, searchTerm, sortConfig, 1)
+                        }}
                         disabled={loading}
                       >
                         <SelectTrigger className="border-purple-200">
@@ -978,7 +1089,10 @@ export default function MangaCollection() {
                       <Label>Band</Label>
                       <Select
                         value={filters.band}
-                        onValueChange={(value) => setFilters({ ...filters, band: value })}
+                        onValueChange={(value) => {
+                          setFilters({ ...filters, band: value })
+                          updateURL({ ...filters, band: value }, searchTerm, sortConfig, 1)
+                        }}
                         disabled={loading}
                       >
                         <SelectTrigger className="border-purple-200">
@@ -999,7 +1113,10 @@ export default function MangaCollection() {
                       <Label>Status</Label>
                       <Select
                         value={filters.status}
-                        onValueChange={(value) => setFilters({ ...filters, status: value })}
+                        onValueChange={(value) => {
+                          setFilters({ ...filters, status: value })
+                          updateURL({ ...filters, status: value }, searchTerm, sortConfig, 1)
+                        }}
                         disabled={loading}
                       >
                         <SelectTrigger className="border-purple-200">
@@ -1261,6 +1378,33 @@ export default function MangaCollection() {
                 </div>
               )}
             </CardTitle>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="hover:bg-purple-100" disabled={loading}>
+                  Sortieren
+                  {sortConfig.key ? ` (${getSortIndicator(sortConfig.key)})` : ""}
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleSort("titel")}>
+                  Titel {getSortIndicator("titel")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort("autor")}>
+                  Autor {getSortIndicator("autor")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort("band")}>Band {getSortIndicator("band")}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort("genre")}>
+                  Genre {getSortIndicator("genre")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort("verlag")}>
+                  Verlag {getSortIndicator("verlag")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort("sprache")}>
+                  Sprache {getSortIndicator("sprache")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -1314,7 +1458,11 @@ export default function MangaCollection() {
                             <BookOpen className="h-6 w-6 text-purple-400" />
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-purple-900">{manga.titel}</TableCell>
+                        <TableCell className="font-medium text-purple-900">
+                          <Link href={`/manga?id=${manga.id}`} className="hover:underline">
+                            {manga.titel}
+                          </Link>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="border-purple-200 text-purple-700">
                             Band {manga.band}
@@ -1456,9 +1604,12 @@ export default function MangaCollection() {
                       <Button
                         variant={page === 1 ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setPage(1)}
+                        onClick={() => {
+                          setPage(1)
+                          updateURL(filters, searchTerm, sortConfig, 1)
+                        }}
                         disabled={loading}
-                        className="w-10 h-8 border-purple-200 hover:bg-purple-50"
+                        className="w-7 md:w-10 h-8 border-purple-200 hover:bg-purple-50"
                       >
                         1
                       </Button>
@@ -1476,9 +1627,12 @@ export default function MangaCollection() {
                         key={pageNum}
                         variant={page === pageNum ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setPage(pageNum)}
+                        onClick={() => {
+                          setPage(pageNum)
+                          updateURL(filters, searchTerm, sortConfig, pageNum)
+                        }}
                         disabled={loading}
-                        className={`w-10 h-8 ${
+                        className={`w-7 md:w-10 h-8 ${
                           page === pageNum
                             ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
                             : "border-purple-200 hover:bg-purple-50"
@@ -1496,9 +1650,12 @@ export default function MangaCollection() {
                       <Button
                         variant={page === totalPages ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setPage(totalPages)}
+                        onClick={() => {
+                          setPage(totalPages)
+                          updateURL(filters, searchTerm, sortConfig, totalPages)
+                        }}
                         disabled={loading}
-                        className="w-10 h-8 border-purple-200 hover:bg-purple-50"
+                        className="w-7 md:w-10 h-8 border-purple-200 hover:bg-purple-50"
                       >
                         {totalPages}
                       </Button>
