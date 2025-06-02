@@ -73,7 +73,7 @@ function transformMangaToDB(manga: CreateMangaRequest | UpdateMangaRequest) {
 
 // API Client Class
 class MangaAPI {
-  // GET all manga with optional filters
+  // GET all manga with optional filters and sorting
   async getMangas(params?: {
     page?: number
     limit?: number
@@ -84,6 +84,8 @@ class MangaAPI {
     sprache?: string
     status?: string
     band?: string
+    sortBy?: string
+    sortDirection?: "asc" | "desc"
   }): Promise<ApiResponse<PaginatedResponse<Manga>>> {
     try {
       const page = params?.page || 1
@@ -136,8 +138,25 @@ class MangaAPI {
         }
       }
 
-      // Apply pagination and ordering
-      query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1)
+      // Apply sorting - Database-level sorting
+      if (params?.sortBy && params?.sortDirection) {
+        const sortColumn = params.sortBy === "coverImage" ? "cover_image" : params.sortBy
+        const ascending = params.sortDirection === "asc"
+
+        // Handle special sorting cases
+        if (params.sortBy === "band") {
+          // Sort band numerically by casting to integer
+          query = query.order("band::int", { ascending, nullsFirst: false })
+        } else {
+          query = query.order(sortColumn, { ascending, nullsFirst: false })
+        }
+      } else {
+        // Default sorting by creation date
+        query = query.order("created_at", { ascending: false })
+      }
+
+      // Apply pagination
+      query = query.range(offset, offset + limit - 1)
 
       const { data, error, count } = await query
 

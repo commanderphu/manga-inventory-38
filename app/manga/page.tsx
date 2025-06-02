@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -22,20 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import {
-  ArrowLeft,
-  Edit,
-  Trash2,
-  BookOpen,
-  Star,
-  Copy,
-  ShoppingCart,
-  Loader2,
-  Search,
-  Camera,
-  Heart,
-  Sparkles,
-} from "lucide-react"
+import { ArrowLeft, Edit, Trash2, BookOpen, Star, Copy, ShoppingCart, Heart, Sparkles } from "lucide-react"
 import { mangaAPI, type Manga } from "@/lib/api"
 import { SimpleISBNScanner } from "@/components/simple-isbn-scanner"
 
@@ -47,8 +33,6 @@ function MangaDetailContent() {
   const [manga, setManga] = useState<Manga | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editingManga, setEditingManga] = useState<Manga | null>(null)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [isLoadingISBN, setIsLoadingISBN] = useState(false)
   const [status, setStatus] = useState<{ type: "success" | "error" | null; message: string }>({
@@ -78,43 +62,6 @@ function MangaDetailContent() {
     } catch (err) {
       setError("Manga nicht gefunden")
       console.error("Error fetching manga:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleEditManga = () => {
-    if (manga) {
-      setEditingManga(manga)
-      setIsEditDialogOpen(true)
-    }
-  }
-
-  const handleUpdateManga = async () => {
-    if (!editingManga || !editingManga.titel) {
-      setStatus({
-        type: "error",
-        message: "Titel ist erforderlich! 📝",
-      })
-      return
-    }
-
-    try {
-      setLoading(true)
-      const { id, createdAt, updatedAt, ...updateData } = editingManga
-      await mangaAPI.updateManga(id, updateData)
-      setManga(editingManga)
-      setEditingManga(null)
-      setIsEditDialogOpen(false)
-      setStatus({
-        type: "success",
-        message: "Manga erfolgreich aktualisiert! 🎉",
-      })
-    } catch (error) {
-      setStatus({
-        type: "error",
-        message: "Fehler beim Aktualisieren des Manga! 😅",
-      })
     } finally {
       setLoading(false)
     }
@@ -167,9 +114,9 @@ function MangaDetailContent() {
     try {
       const response = await mangaAPI.getISBNMetadata(isbn)
 
-      if (response.data && editingManga) {
-        setEditingManga({
-          ...editingManga,
+      if (response.data && manga) {
+        setManga({
+          ...manga,
           ...response.data,
           isbn: isbn,
         })
@@ -191,7 +138,7 @@ function MangaDetailContent() {
   }
 
   const handleISBNLookup = async (isbn: string) => {
-    if (!isbn || isbn.length < 10 || !editingManga) return
+    if (!isbn || isbn.length < 10 || !manga) return
 
     setIsLoadingISBN(true)
 
@@ -199,8 +146,8 @@ function MangaDetailContent() {
       const response = await mangaAPI.getISBNMetadata(isbn)
 
       if (response.data) {
-        setEditingManga({
-          ...editingManga,
+        setManga({
+          ...manga,
           ...response.data,
           isbn: isbn,
         })
@@ -348,7 +295,7 @@ function MangaDetailContent() {
                   <CardTitle className="text-xl md:text-2xl text-purple-900 break-words">{manga.titel}</CardTitle>
                   <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                     <Button
-                      onClick={handleEditManga}
+                      onClick={() => router.push(`/manga/edit/${mangaId}`)}
                       className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 w-full sm:w-auto"
                       size="sm"
                     >
@@ -508,232 +455,6 @@ function MangaDetailContent() {
             </Card>
           </div>
         </div>
-
-        {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="mx-4 max-w-md max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-purple-700 text-lg">Manga bearbeiten ✏️</DialogTitle>
-            </DialogHeader>
-            {editingManga && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-titel" className="text-sm">
-                    Titel *
-                  </Label>
-                  <Input
-                    id="edit-titel"
-                    value={editingManga.titel}
-                    onChange={(e) => setEditingManga({ ...editingManga, titel: e.target.value })}
-                    placeholder="Manga-Titel"
-                    className="border-purple-200 focus:border-purple-400 text-sm"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-band" className="text-sm">
-                      Band
-                    </Label>
-                    <Input
-                      id="edit-band"
-                      value={editingManga.band}
-                      onChange={(e) => setEditingManga({ ...editingManga, band: e.target.value })}
-                      placeholder="Band-Nr."
-                      className="border-purple-200 focus:border-purple-400 text-sm"
-                      disabled={loading}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-sprache" className="text-sm">
-                      Sprache
-                    </Label>
-                    <Input
-                      id="edit-sprache"
-                      value={editingManga.sprache}
-                      onChange={(e) => setEditingManga({ ...editingManga, sprache: e.target.value })}
-                      placeholder="Deutsch"
-                      className="border-purple-200 focus:border-purple-400 text-sm"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-genre" className="text-sm">
-                    Genre
-                  </Label>
-                  <Input
-                    id="edit-genre"
-                    value={editingManga.genre}
-                    onChange={(e) => setEditingManga({ ...editingManga, genre: e.target.value })}
-                    placeholder="z.B. Shonen, Action"
-                    className="border-purple-200 focus:border-purple-400 text-sm"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-autor" className="text-sm">
-                    Autor
-                  </Label>
-                  <Input
-                    id="edit-autor"
-                    value={editingManga.autor}
-                    onChange={(e) => setEditingManga({ ...editingManga, autor: e.target.value })}
-                    placeholder="Autor-Name"
-                    className="border-purple-200 focus:border-purple-400 text-sm"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-verlag" className="text-sm">
-                    Verlag
-                  </Label>
-                  <Input
-                    id="edit-verlag"
-                    value={editingManga.verlag}
-                    onChange={(e) => setEditingManga({ ...editingManga, verlag: e.target.value })}
-                    placeholder="Verlag"
-                    className="border-purple-200 focus:border-purple-400 text-sm"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Label htmlFor="edit-isbn" className="text-sm">
-                        ISBN
-                      </Label>
-                      <Input
-                        id="edit-isbn"
-                        value={editingManga.isbn}
-                        onChange={(e) => setEditingManga({ ...editingManga, isbn: e.target.value })}
-                        placeholder="ISBN-Nummer"
-                        className="border-purple-200 focus:border-purple-400 text-sm"
-                        disabled={loading || isLoadingISBN}
-                      />
-                    </div>
-                    <div className="flex flex-col justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleISBNLookup(editingManga.isbn)}
-                        disabled={loading || isLoadingISBN || !editingManga.isbn}
-                        className="h-9 w-9"
-                      >
-                        {isLoadingISBN ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
-                      </Button>
-                    </div>
-                    <div className="flex flex-col justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setIsScannerOpen(true)}
-                        disabled={loading || isLoadingISBN}
-                        className="h-9 w-9"
-                      >
-                        <Camera className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-coverImage" className="text-sm">
-                    Cover-Bild URL
-                  </Label>
-                  <Input
-                    id="edit-coverImage"
-                    value={editingManga.coverImage}
-                    onChange={(e) => setEditingManga({ ...editingManga, coverImage: e.target.value })}
-                    placeholder="URL zum Cover-Bild"
-                    className="border-purple-200 focus:border-purple-400 text-sm"
-                    disabled={loading}
-                  />
-                  {editingManga.coverImage && editingManga.coverImage !== "/placeholder.svg?height=120&width=80" && (
-                    <div className="mt-2 flex justify-center">
-                      <img
-                        src={editingManga.coverImage || "/placeholder.svg"}
-                        alt="Cover Vorschau"
-                        className="h-32 md:h-40 object-contain rounded-md border border-purple-200"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = "/placeholder.svg?height=120&width=80"
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="edit-read"
-                      checked={editingManga.read}
-                      onCheckedChange={(checked) => setEditingManga({ ...editingManga, read: checked as boolean })}
-                      disabled={loading}
-                    />
-                    <Label htmlFor="edit-read" className="text-sm">
-                      Gelesen ⭐
-                    </Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="edit-double"
-                      checked={editingManga.double}
-                      onCheckedChange={(checked) => setEditingManga({ ...editingManga, double: checked as boolean })}
-                      disabled={loading}
-                    />
-                    <Label htmlFor="edit-double" className="text-sm">
-                      Doppelt vorhanden 📚
-                    </Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="edit-newbuy"
-                      checked={editingManga.newbuy}
-                      onCheckedChange={(checked) => setEditingManga({ ...editingManga, newbuy: checked as boolean })}
-                      disabled={loading}
-                    />
-                    <Label htmlFor="edit-newbuy" className="text-sm">
-                      Neu kaufen 🛒
-                    </Label>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button
-                    onClick={handleUpdateManga}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                    disabled={loading}
-                    size="sm"
-                  >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Aktualisieren ✨
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsEditDialogOpen(false)}
-                    className="flex-1"
-                    disabled={loading}
-                    size="sm"
-                  >
-                    Abbrechen
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
 
         {/* ISBN Scanner Dialog */}
         <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>

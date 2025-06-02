@@ -69,39 +69,15 @@ export function useManga(): UseMangaReturn {
           page: pageNum || page,
           limit: pageSize || 20,
           search: searchTerm || "",
+          sortBy: sortKey || undefined,
+          sortDirection: sortDirection || undefined,
           ...filters,
         }
 
         const response = await mangaAPI.getMangas(params)
 
-        // Apply client-side sorting if specified
-        let sortedData = response.data.data
-        if (sortKey && sortDirection) {
-          sortedData = [...response.data.data].sort((a, b) => {
-            const aValue = a[sortKey]
-            const bValue = b[sortKey]
-
-            if (aValue === null || aValue === undefined) return 1
-            if (bValue === null || bValue === undefined) return -1
-
-            if (typeof aValue === "string" && typeof bValue === "string") {
-              const comparison = aValue.localeCompare(bValue)
-              return sortDirection === "asc" ? comparison : -comparison
-            }
-
-            if (typeof aValue === "number" && typeof bValue === "number") {
-              return sortDirection === "asc" ? aValue - bValue : bValue - aValue
-            }
-
-            if (typeof aValue === "boolean" && typeof bValue === "boolean") {
-              return sortDirection === "asc" ? (aValue ? 1 : -1) : bValue ? 1 : -1
-            }
-
-            return 0
-          })
-        }
-
-        setMangas(sortedData)
+        // No client-side sorting needed anymore - it's done in the database
+        setMangas(response.data.data)
         setTotal(response.data.total)
         setTotalPages(response.data.totalPages)
       } catch (err) {
