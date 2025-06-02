@@ -45,6 +45,9 @@ import {
   ChevronRight,
   Trash2,
   MoreHorizontal,
+  ChevronsLeft,
+  ChevronsRight,
+  MoreVertical,
 } from "lucide-react"
 import { useManga } from "@/hooks/useManga"
 import type { Manga, CreateMangaRequest } from "@/lib/api"
@@ -68,6 +71,285 @@ interface SortConfig {
   direction: "asc" | "desc" | null
 }
 
+// Enhanced Pagination Component
+function EnhancedPagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+  loading = false,
+}: {
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  itemsPerPage: number
+  onPageChange: (page: number) => void
+  loading?: boolean
+}) {
+  const [jumpToPage, setJumpToPage] = useState("")
+  const [showJumpInput, setShowJumpInput] = useState(false)
+
+  const handleJumpToPage = () => {
+    const pageNum = Number.parseInt(jumpToPage)
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      onPageChange(pageNum)
+      setJumpToPage("")
+      setShowJumpInput(false)
+    }
+  }
+
+  const getVisiblePages = () => {
+    const delta = 2
+    const range = []
+    const rangeWithDots = []
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+      range.push(i)
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, "...")
+    } else {
+      rangeWithDots.push(1)
+    }
+
+    rangeWithDots.push(...range)
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push("...", totalPages)
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages)
+    }
+
+    return rangeWithDots
+  }
+
+  const startItem = (currentPage - 1) * itemsPerPage + 1
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems)
+
+  return (
+    <div className="bg-gradient-to-r from-purple-50 via-pink-50 to-indigo-50 border-t border-purple-100 px-4 py-6">
+      <div className="flex flex-col space-y-4">
+        {/* Info Section */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-2 text-sm text-purple-700">
+            <div className="flex items-center space-x-1">
+              <BookOpen className="h-4 w-4" />
+              <span className="font-medium">
+                {startItem}-{endItem} von {totalItems.toLocaleString()} Manga
+              </span>
+            </div>
+            {loading && <Loader2 className="h-4 w-4 animate-spin text-purple-500" />}
+          </div>
+
+          {/* Page Size Selector */}
+          <div className="flex items-center space-x-2 text-sm">
+            <span className="text-purple-700">Einträge pro Seite:</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                // This would need to be implemented in the parent component
+                console.log("Change page size to:", value)
+              }}
+              disabled={loading}
+            >
+              <SelectTrigger className="w-20 h-8 border-purple-200">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Navigation Section */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Left: Quick Navigation */}
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(1)}
+              disabled={currentPage === 1 || loading}
+              className="h-9 px-3 border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">Erste</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1 || loading}
+              className="h-9 px-3 border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">Zurück</span>
+            </Button>
+          </div>
+
+          {/* Center: Page Numbers */}
+          <div className="flex items-center space-x-1">
+            {getVisiblePages().map((page, index) => {
+              if (page === "...") {
+                return (
+                  <div key={`dots-${index}`} className="relative">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 text-purple-600 hover:bg-purple-100"
+                      onClick={() => setShowJumpInput(!showJumpInput)}
+                      disabled={loading}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                    {showJumpInput && (
+                      <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 z-10">
+                        <div className="bg-white border border-purple-200 rounded-lg shadow-lg p-3 min-w-[120px]">
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              type="number"
+                              placeholder="Seite"
+                              value={jumpToPage}
+                              onChange={(e) => setJumpToPage(e.target.value)}
+                              className="h-8 w-16 text-center border-purple-200"
+                              min={1}
+                              max={totalPages}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleJumpToPage()
+                                } else if (e.key === "Escape") {
+                                  setShowJumpInput(false)
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={handleJumpToPage}
+                              className="h-8 px-2 bg-purple-600 hover:bg-purple-700"
+                            >
+                              →
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 text-center">1-{totalPages}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
+              const pageNum = page as number
+              const isActive = pageNum === currentPage
+
+              return (
+                <Button
+                  key={pageNum}
+                  variant={isActive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onPageChange(pageNum)}
+                  disabled={loading}
+                  className={`h-9 w-9 transition-all duration-200 ${
+                    isActive
+                      ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg scale-105 border-0"
+                      : "border-purple-200 hover:bg-purple-50 hover:border-purple-300 hover:scale-105"
+                  }`}
+                >
+                  {pageNum}
+                </Button>
+              )
+            })}
+          </div>
+
+          {/* Right: Quick Navigation */}
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages || loading}
+              className="h-9 px-3 border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+            >
+              <span className="hidden sm:inline mr-1">Weiter</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(totalPages)}
+              disabled={currentPage === totalPages || loading}
+              className="h-9 px-3 border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+            >
+              <span className="hidden sm:inline mr-1">Letzte</span>
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Compact View */}
+        <div className="sm:hidden">
+          <div className="flex items-center justify-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(Math.max(1, currentPage - 5))}
+              disabled={currentPage <= 5 || loading}
+              className="h-8 px-2 border-purple-200"
+            >
+              -5
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1 || loading}
+              className="h-8 px-2 border-purple-200"
+            >
+              -1
+            </Button>
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-md text-sm font-medium min-w-[60px] text-center">
+              {currentPage}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages || loading}
+              className="h-8 px-2 border-purple-200"
+            >
+              +1
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(Math.min(totalPages, currentPage + 5))}
+              disabled={currentPage >= totalPages - 4 || loading}
+              className="h-8 px-2 border-purple-200"
+            >
+              +5
+            </Button>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="w-full bg-purple-100 rounded-full h-2 overflow-hidden">
+          <div
+            className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${(currentPage / totalPages) * 100}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function MangaCollectionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -89,11 +371,9 @@ function MangaCollectionContent() {
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
-  const [editingManga, setEditingManga] = useState<Manga | null>(null)
   const [selectedMangas, setSelectedMangas] = useState<string[]>([])
   const [importStatus, setImportStatus] = useState<{ type: "success" | "error" | null; message: string }>({
     type: null,
@@ -190,18 +470,9 @@ function MangaCollectionContent() {
     }
   }, [searchParams]) // Only run when searchParams change
 
-  const nextPage = () => {
-    if (page < totalPages) {
-      setPage((prev) => prev + 1)
-      updateURL(filters, searchTerm, sortConfig, page + 1)
-    }
-  }
-
-  const prevPage = () => {
-    if (page > 1) {
-      setPage((prev) => prev - 1)
-      updateURL(filters, searchTerm, sortConfig, page - 1)
-    }
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+    updateURL(filters, searchTerm, sortConfig, newPage)
   }
 
   // Filter options from existing data
@@ -268,22 +539,12 @@ function MangaCollectionContent() {
       const response = await mangaAPI.getISBNMetadata(isbn)
 
       if (response.data) {
-        // If we're in edit mode
-        if (editingManga) {
-          setEditingManga({
-            ...editingManga,
-            ...response.data,
-            isbn: isbn,
-          })
-        } else {
-          // If we're in add mode
-          setNewManga({
-            ...newManga,
-            ...response.data,
-            isbn: isbn,
-          })
-          setIsAddDialogOpen(true)
-        }
+        setNewManga({
+          ...newManga,
+          ...response.data,
+          isbn: isbn,
+        })
+        setIsAddDialogOpen(true)
 
         setImportStatus({
           type: "success",
@@ -311,21 +572,11 @@ function MangaCollectionContent() {
       const response = await mangaAPI.getISBNMetadata(isbn)
 
       if (response.data) {
-        // If we're in edit mode
-        if (editingManga) {
-          setEditingManga({
-            ...editingManga,
-            ...response.data,
-            isbn: isbn,
-          })
-        } else {
-          // If we're in add mode
-          setNewManga({
-            ...newManga,
-            ...response.data,
-            isbn: isbn,
-          })
-        }
+        setNewManga({
+          ...newManga,
+          ...response.data,
+          isbn: isbn,
+        })
 
         setImportStatus({
           type: "success",
@@ -378,39 +629,6 @@ function MangaCollectionContent() {
       setImportStatus({
         type: "error",
         message: "Fehler beim Hinzufügen des Manga! 😅",
-      })
-    }
-  }
-
-  // UPDATE Function
-  const handleEditManga = (manga: Manga) => {
-    setEditingManga(manga)
-    setIsEditDialogOpen(true)
-  }
-
-  const handleUpdateManga = async () => {
-    if (!editingManga || !editingManga.titel) {
-      setImportStatus({
-        type: "error",
-        message: "Titel ist erforderlich! 📝",
-      })
-      return
-    }
-
-    try {
-      const { id, createdAt, updatedAt, ...updateData } = editingManga
-      await updateManga(id, updateData)
-      setEditingManga(null)
-      setIsEditDialogOpen(false)
-      setImportStatus({
-        type: "success",
-        message: "Manga erfolgreich aktualisiert! 🎉",
-      })
-      await fetchStats()
-    } catch (error) {
-      setImportStatus({
-        type: "error",
-        message: "Fehler beim Aktualisieren des Manga! 😅",
       })
     }
   }
@@ -1143,208 +1361,6 @@ function MangaCollectionContent() {
           </div>
         </div>
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-purple-700">Manga bearbeiten ✏️</DialogTitle>
-            </DialogHeader>
-            {editingManga && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-titel">Titel *</Label>
-                  <Input
-                    id="edit-titel"
-                    value={editingManga.titel}
-                    onChange={(e) => setEditingManga({ ...editingManga, titel: e.target.value })}
-                    placeholder="Manga-Titel"
-                    className="border-purple-200 focus:border-purple-400"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-band">Band</Label>
-                    <Input
-                      id="edit-band"
-                      value={editingManga.band}
-                      onChange={(e) => setEditingManga({ ...editingManga, band: e.target.value })}
-                      placeholder="Band-Nr."
-                      className="border-purple-200 focus:border-purple-400"
-                      disabled={loading}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-sprache">Sprache</Label>
-                    <Input
-                      id="edit-sprache"
-                      value={editingManga.sprache}
-                      onChange={(e) => setEditingManga({ ...editingManga, sprache: e.target.value })}
-                      placeholder="Deutsch"
-                      className="border-purple-200 focus:border-purple-400"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-genre">Genre</Label>
-                  <Input
-                    id="edit-genre"
-                    value={editingManga.genre}
-                    onChange={(e) => setEditingManga({ ...editingManga, genre: e.target.value })}
-                    placeholder="z.B. Shonen, Action"
-                    className="border-purple-200 focus:border-purple-400"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-autor">Autor</Label>
-                  <Input
-                    id="edit-autor"
-                    value={editingManga.autor}
-                    onChange={(e) => setEditingManga({ ...editingManga, autor: e.target.value })}
-                    placeholder="Autor-Name"
-                    className="border-purple-200 focus:border-purple-400"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-verlag">Verlag</Label>
-                  <Input
-                    id="edit-verlag"
-                    value={editingManga.verlag}
-                    onChange={(e) => setEditingManga({ ...editingManga, verlag: e.target.value })}
-                    placeholder="Verlag"
-                    className="border-purple-200 focus:border-purple-400"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Label htmlFor="edit-isbn">ISBN</Label>
-                      <Input
-                        id="edit-isbn"
-                        value={editingManga.isbn}
-                        onChange={(e) => setEditingManga({ ...editingManga, isbn: e.target.value })}
-                        placeholder="ISBN-Nummer"
-                        className="border-purple-200 focus:border-purple-400"
-                        disabled={loading || isLoadingISBN}
-                      />
-                    </div>
-                    <div className="flex flex-col justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleISBNLookup(editingManga.isbn)}
-                        disabled={loading || isLoadingISBN || !editingManga.isbn}
-                        className="h-10 w-10"
-                      >
-                        {isLoadingISBN ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                    <div className="flex flex-col justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setIsScannerOpen(true)}
-                        disabled={loading || isLoadingISBN}
-                        className="h-10 w-10"
-                      >
-                        <Camera className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-coverImage">Cover-Bild URL</Label>
-                  <Input
-                    id="edit-coverImage"
-                    value={editingManga.coverImage}
-                    onChange={(e) => setEditingManga({ ...editingManga, coverImage: e.target.value })}
-                    placeholder="URL zum Cover-Bild"
-                    className="border-purple-200 focus:border-purple-400"
-                    disabled={loading}
-                  />
-                  {editingManga.coverImage && editingManga.coverImage !== "/placeholder.svg?height=120&width=80" && (
-                    <div className="mt-2 flex justify-center">
-                      <img
-                        src={editingManga.coverImage || "/placeholder.svg"}
-                        alt="Cover Vorschau"
-                        className="h-40 object-contain rounded-md border border-purple-200"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = "/placeholder.svg?height=120&width=80"
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="edit-read"
-                      checked={editingManga.read}
-                      onCheckedChange={(checked) => setEditingManga({ ...editingManga, read: checked as boolean })}
-                      disabled={loading}
-                    />
-                    <Label htmlFor="edit-read">Gelesen ⭐</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="edit-double"
-                      checked={editingManga.double}
-                      onCheckedChange={(checked) => setEditingManga({ ...editingManga, double: checked as boolean })}
-                      disabled={loading}
-                    />
-                    <Label htmlFor="edit-double">Doppelt vorhanden 📚</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="edit-newbuy"
-                      checked={editingManga.newbuy}
-                      onCheckedChange={(checked) => setEditingManga({ ...editingManga, newbuy: checked as boolean })}
-                      disabled={loading}
-                    />
-                    <Label htmlFor="edit-newbuy">Neu kaufen 🛒</Label>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleUpdateManga}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                    disabled={loading}
-                  >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Aktualisieren ✨
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsEditDialogOpen(false)}
-                    className="flex-1"
-                    disabled={loading}
-                  >
-                    Abbrechen
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
         {/* Manga Table */}
         <Card className="shadow-xl border-purple-200">
           <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
@@ -1556,115 +1572,17 @@ function MangaCollectionContent() {
               </div>
             )}
           </CardContent>
+
+          {/* Enhanced Pagination */}
           {!loading && mangas.length > 0 && totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 py-4 border-t border-purple-100 gap-4">
-              {/* Info Text - versteckt auf sehr kleinen Bildschirmen */}
-              <div className="hidden sm:flex items-center space-x-2 text-sm text-muted-foreground">
-                <span>
-                  Seite {page} von {totalPages} ({total} Manga gesamt)
-                </span>
-              </div>
-
-              {/* Mobile Info - nur auf kleinen Bildschirmen */}
-              <div className="sm:hidden text-xs text-muted-foreground">
-                {page}/{totalPages}
-              </div>
-
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                {/* Zurück Button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={prevPage}
-                  disabled={page === 1 || loading}
-                  className="border-purple-200 hover:bg-purple-50 h-8 px-2 sm:px-3"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-1">Zurück</span>
-                </Button>
-
-                {/* Seitenzahlen - angepasst für mobile */}
-                <div className="flex items-center space-x-1">
-                  {/* Erste Seite - nur auf Desktop wenn weit entfernt */}
-                  {page > 4 && (
-                    <div className="hidden sm:flex items-center space-x-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setPage(1)
-                          updateURL(filters, searchTerm, sortConfig, 1)
-                        }}
-                        disabled={loading}
-                        className="w-8 h-8 border-purple-200 hover:bg-purple-50"
-                      >
-                        1
-                      </Button>
-                      <span className="text-muted-foreground">...</span>
-                    </div>
-                  )}
-
-                  {/* Aktuelle Seiten-Umgebung - weniger auf mobile */}
-                  {Array.from({ length: window.innerWidth < 640 ? 3 : 5 }, (_, i) => {
-                    const maxPages = window.innerWidth < 640 ? 3 : 5
-                    const pageNum =
-                      Math.max(1, Math.min(totalPages - maxPages + 1, page - Math.floor(maxPages / 2))) + i
-                    if (pageNum > totalPages) return null
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={page === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setPage(pageNum)
-                          updateURL(filters, searchTerm, sortConfig, pageNum)
-                        }}
-                        disabled={loading}
-                        className={`w-8 h-8 text-xs sm:text-sm ${
-                          page === pageNum
-                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
-                            : "border-purple-200 hover:bg-purple-50"
-                        }`}
-                      >
-                        {pageNum}
-                      </Button>
-                    )
-                  })}
-
-                  {/* Letzte Seite - nur auf Desktop wenn weit entfernt */}
-                  {page < totalPages - 3 && (
-                    <div className="hidden sm:flex items-center space-x-1">
-                      <span className="text-muted-foreground">...</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setPage(totalPages)
-                          updateURL(filters, searchTerm, sortConfig, totalPages)
-                        }}
-                        disabled={loading}
-                        className="w-8 h-8 border-purple-200 hover:bg-purple-50"
-                      >
-                        {totalPages}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Weiter Button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={nextPage}
-                  disabled={page === totalPages || loading}
-                  className="border-purple-200 hover:bg-purple-50 h-8 px-2 sm:px-3"
-                >
-                  <span className="hidden sm:inline mr-1">Weiter</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <EnhancedPagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              itemsPerPage={pageSize}
+              onPageChange={handlePageChange}
+              loading={loading}
+            />
           )}
         </Card>
       </div>
