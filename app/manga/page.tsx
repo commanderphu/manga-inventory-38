@@ -38,7 +38,6 @@ import {
 } from "lucide-react"
 import { mangaAPI, type Manga } from "@/lib/api"
 import { SimpleISBNScanner } from "@/components/simple-isbn-scanner"
-import Link from "next/link"
 
 function MangaDetailContent() {
   const searchParams = useSearchParams()
@@ -254,12 +253,19 @@ function MangaDetailContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50">
         <div className="container mx-auto p-6 space-y-6">
-          <Link href="/">
-            <Button variant="outline" className="mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Zurück zur Sammlung
-            </Button>
-          </Link>
+          <Button
+            variant="outline"
+            className="mb-4"
+            onClick={() => {
+              const params = new URLSearchParams(window.location.search)
+              params.delete("id")
+              const newUrl = params.toString() ? `/?${params.toString()}` : "/"
+              router.push(newUrl)
+            }}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Zurück zur Sammlung
+          </Button>
           <Alert className="border-red-400 bg-red-50">
             <AlertDescription className="font-medium text-red-700">{error || "Manga nicht gefunden"}</AlertDescription>
           </Alert>
@@ -273,12 +279,22 @@ function MangaDetailContent() {
       <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <Link href="/">
-            <Button variant="outline" className="border-purple-200 hover:bg-purple-50 w-full sm:w-auto">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Zurück zur Sammlung
-            </Button>
-          </Link>
+          <Button
+            variant="outline"
+            className="border-purple-200 hover:bg-purple-50 w-full sm:w-auto"
+            onClick={() => {
+              // Entferne nur die 'id' Parameter, behalte alle anderen bei
+              const params = new URLSearchParams(window.location.search)
+              params.delete("id")
+
+              // Gehe zur Hauptseite mit den erhaltenen Parametern zurück
+              const newUrl = params.toString() ? `/?${params.toString()}` : "/"
+              router.push(newUrl)
+            }}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Zurück zur Sammlung
+          </Button>
           <div className="flex items-center gap-2 mx-auto sm:mx-0">
             <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-pink-500" />
             <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent">
