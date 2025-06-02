@@ -22,7 +22,14 @@ interface UseMangaReturn {
   stats: any
 
   // Actions
-  fetchMangas: (filters?: Partial<Filters>, searchTerm?: string, pageNum?: number, pageSize?: number) => Promise<void>
+  fetchMangas: (
+    filters?: Partial<Filters>,
+    searchTerm?: string,
+    pageNum?: number,
+    pageSize?: number,
+    sortKey?: keyof Manga | null,
+    sortDirection?: "asc" | "desc" | null,
+  ) => Promise<void>
   createManga: (manga: CreateMangaRequest) => Promise<void>
   updateManga: (id: string, manga: UpdateMangaRequest) => Promise<void>
   deleteManga: (id: string) => Promise<void>
@@ -46,7 +53,14 @@ export function useManga(): UseMangaReturn {
   const [stats, setStats] = useState<any>(null)
 
   const fetchMangas = useCallback(
-    async (filters?: Partial<Filters>, searchTerm?: string, pageNum?: number, pageSize?: number) => {
+    async (
+      filters?: Partial<Filters>,
+      searchTerm?: string,
+      pageNum?: number,
+      pageSize?: number,
+      sortKey?: keyof Manga | null,
+      sortDirection?: "asc" | "desc" | null,
+    ) => {
       setLoading(true)
       setError(null)
 
@@ -60,7 +74,34 @@ export function useManga(): UseMangaReturn {
 
         const response = await mangaAPI.getMangas(params)
 
-        setMangas(response.data.data)
+        // Apply client-side sorting if specified
+        let sortedData = response.data.data
+        if (sortKey && sortDirection) {
+          sortedData = [...response.data.data].sort((a, b) => {
+            const aValue = a[sortKey]
+            const bValue = b[sortKey]
+
+            if (aValue === null || aValue === undefined) return 1
+            if (bValue === null || bValue === undefined) return -1
+
+            if (typeof aValue === "string" && typeof bValue === "string") {
+              const comparison = aValue.localeCompare(bValue)
+              return sortDirection === "asc" ? comparison : -comparison
+            }
+
+            if (typeof aValue === "number" && typeof bValue === "number") {
+              return sortDirection === "asc" ? aValue - bValue : bValue - aValue
+            }
+
+            if (typeof aValue === "boolean" && typeof bValue === "boolean") {
+              return sortDirection === "asc" ? (aValue ? 1 : -1) : bValue ? 1 : -1
+            }
+
+            return 0
+          })
+        }
+
+        setMangas(sortedData)
         setTotal(response.data.total)
         setTotalPages(response.data.totalPages)
       } catch (err) {
