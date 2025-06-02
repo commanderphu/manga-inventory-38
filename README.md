@@ -1,30 +1,81 @@
-# Manga dictionary frontend
+# 📚 Manga Dictionary Frontend
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+*Automatically synced with your [v0.dev](https://v0.dev) deployments.*
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/commanderphus-projects/v0-manga-dictionary-frontend)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/commanderphus-projects/v0-manga-dictionary-frontend)  
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/BMU948SoMYD)
 
-## Overview
+---
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## 📝 Overview
 
-## Deployment
+Dieses Projekt ist das **Frontend einer persönlichen Manga-Bibliothek**, mit der eine private Sammlung einfach verwaltet, durchsucht und angezeigt werden kann. Es wurde mit [v0.dev](https://v0.dev) erstellt und nutzt automatische Synchronisation mit Vercel zur kontinuierlichen Bereitstellung.
 
-Your project is live at:
+> Die Idee entstand aus dem Wunsch, die analoge Manga-Excel-Liste digital, durchsuchbar und erweiterbar zu gestalten – z. B. mit Coveranzeige, Metadaten und Filteroptionen.
 
-**[https://vercel.com/commanderphus-projects/v0-manga-dictionary-frontend](https://vercel.com/commanderphus-projects/v0-manga-dictionary-frontend)**
+---
 
-## Build your app
+## 🚀 Live Deployment
 
-Continue building your app on:
+Du kannst die aktuelle Version hier aufrufen:  
+👉 **[Live-App auf Vercel](https://vercel.com/commanderphus-projects/v0-manga-dictionary-frontend)**
 
-**[https://v0.dev/chat/projects/BMU948SoMYD](https://v0.dev/chat/projects/BMU948SoMYD)**
+---
 
-## How It Works
+## 🛠️ Tech Stack
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+- **Frontend:** [v0.dev](https://v0.dev) (React mit TailwindCSS)
+- **Hosting:** [Vercel](https://vercel.com)
+- **Design:** KI-gestützt via Prompt-basiertes Interface in v0
+- **Versionierung:** GitHub Sync durch v0
+
+---
+
+## 🧩 Funktionen (bisher)
+
+- Übersicht und Darstellung von Manga-Titeln
+- Responsives Design
+- KI-generierte Komponenten mit manuellem Feinschliff möglich
+- Integration mit API oder Backend geplant (z. B. FastAPI oder Node.js)
+
+---
+
+## 🧪 Entwicklung & Erweiterung
+
+Weiterentwicklung ist aktuell in Planung. Nächste Schritte könnten beinhalten:
+
+- 🔍 Such- und Filterfunktion
+- 🖼️ Einbindung von Covern (z. B. über die Google Books API)
+- 🗂️ Kategorisierung nach Status (Gelesen, Wunschliste, etc.)
+- 🧠 Login-System zur Trennung mehrerer Nutzer
+- ⚙️ Backend mit SQLite, FastAPI oder Node.js (better-sqlite3)
+
+---
+
+## 🧵 Entwicklung über v0.dev
+
+Dein Projekt wird automatisch synchronisiert und deployed.  
+Weiterbauen kannst du direkt auf:
+
+👉 **[v0.dev Projektseite öffnen](https://v0.dev/chat/projects/BMU948SoMYD)**
+
+### Ablauf:
+
+1. Projekt auf [v0.dev](https://v0.dev) erstellen oder bearbeiten
+2. Änderungen deployen über die v0.dev-Oberfläche
+3. Repo wird automatisch aktualisiert
+4. Vercel deployed die aktuelle Version
+
+---
+
+## 📂 Projektstruktur (automatisch generiert durch v0)
+
+Da dieses Repo durch v0 gepflegt wird, ist der Code in Komponenten und Styles organisiert, wie von der Plattform generiert. Eigene Anpassungen sollten mit Bedacht gemacht werden, da sie bei der nächsten Synchronisation überschrieben werden könnten.
+
+---
+
+## 📬 Kontakt
+
+Fragen oder Ideen? Melde dich gerne bei mir:  
+**Joshua (commanderphu)**  
+[LinkedIn](https://www.linkedin.com/in/joshuaphu/) · [GitHub](https://github.com/commanderphu)
