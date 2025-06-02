@@ -107,13 +107,13 @@ function MangaCollectionContent() {
     autor: searchParams.get("autor") || "",
     verlag: searchParams.get("verlag") || "",
     sprache: searchParams.get("sprache") || "",
-    status: searchParams.get("status") || "",
+    status: searchParams.get("status") || "unread",
     band: searchParams.get("band") || "",
   })
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: (searchParams.get("sort") as keyof Manga) || null,
-    direction: (searchParams.get("direction") as "asc" | "desc") || null,
+    key: (searchParams.get("sort") as keyof Manga) || "titel",
+    direction: (searchParams.get("direction") as "asc" | "desc") || "asc",
   })
 
   const [newManga, setNewManga] = useState<CreateMangaRequest>({
@@ -236,22 +236,22 @@ function MangaCollectionContent() {
       autor: "",
       verlag: "",
       sprache: "",
-      status: "",
+      status: "unread",
       band: "",
     })
     setSearchTerm("")
-    setSortConfig({ key: null, direction: null })
+    setSortConfig({ key: "titel", direction: "asc" })
     updateURL(
       {
         genre: "",
         autor: "",
         verlag: "",
         sprache: "",
-        status: "",
+        status: "unread",
         band: "",
       },
       "",
-      { key: null, direction: null },
+      { key: "titel", direction: "asc" },
       1,
     )
   }
@@ -1531,7 +1531,7 @@ function MangaCollectionContent() {
                               ) : (
                                 <div className="flex items-center gap-1.5">
                                   <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-                                  <span className="text-sm text-gray-500">Nicht kaufen</span>
+                                  <span className="text-sm text-gray-500">Neu kaufen</span>
                                 </div>
                               )}
                             </div>
