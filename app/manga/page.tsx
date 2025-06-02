@@ -283,11 +283,11 @@ function MangaDetailContent() {
             variant="outline"
             className="border-purple-200 hover:bg-purple-50 w-full sm:w-auto"
             onClick={() => {
-              // Entferne nur die 'id' Parameter, behalte alle anderen bei
-              const params = new URLSearchParams(window.location.search)
-              params.delete("id")
+              // Erstelle neue URLSearchParams basierend auf den aktuellen searchParams
+              const params = new URLSearchParams(searchParams.toString())
+              params.delete("id") // Entferne nur die ID
 
-              // Gehe zur Hauptseite mit den erhaltenen Parametern zurück
+              // Gehe zur Hauptseite mit allen anderen Parametern zurück
               const newUrl = params.toString() ? `/?${params.toString()}` : "/"
               router.push(newUrl)
             }}

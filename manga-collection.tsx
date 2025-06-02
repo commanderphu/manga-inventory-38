@@ -1461,7 +1461,10 @@ function MangaCollectionContent() {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium text-purple-900">
-                          <Link href={`/manga?id=${manga.id}`} className="hover:underline">
+                          <Link
+                            href={`/manga?${new URLSearchParams({ ...Object.fromEntries(searchParams.entries()), id: manga.id }).toString()}`}
+                            className="hover:underline"
+                          >
                             {manga.titel}
                           </Link>
                         </TableCell>
