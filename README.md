@@ -36,6 +36,8 @@ Du kannst die aktuelle Version hier aufrufen:
 - Responsives Design
 - KI-generierte Komponenten mit manuellem Feinschliff möglich
 - Integration mit API oder Backend geplant (z. B. FastAPI oder Node.js)
+- Excel-Import
+- ISBN-Scanner/-Leser
 
 ---
 
@@ -43,13 +45,17 @@ Du kannst die aktuelle Version hier aufrufen:
 
 Weiterentwicklung ist aktuell in Planung. Nächste Schritte könnten beinhalten:
 
-- 🔍 Such- und Filterfunktion
-- 🖼️ Einbindung von Covern (z. B. über die Google Books API)
-- 🗂️ Kategorisierung nach Status (Gelesen, Wunschliste, etc.)
+
 - 🧠 Login-System zur Trennung mehrerer Nutzer
-- ⚙️ Backend mit SQLite, FastAPI oder Node.js (better-sqlite3)
 
 ---
+
+## Excel-Import 
+
+Im Ordner `public` findest du eine Beispiel-Datei namens `manga-list.xlsx.example`.
+Kopiere sie und benenne die Kopie in `manga-list.xlsx` um.
+Dort kannst du ganz einfach deine Mangasammlung eintragen.
+Lade die Datei anschließend über den Excel-Import hoch – der Rest passiert automatisch!
 
 ## 🧵 Entwicklung über v0.dev
 
