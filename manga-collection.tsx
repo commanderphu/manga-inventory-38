@@ -183,6 +183,14 @@ function MangaCollectionContent() {
     [router],
   )
 
+  // Initialize page from URL on component mount
+  useEffect(() => {
+    const urlPage = Number(searchParams.get("page")) || 1
+    if (urlPage !== page) {
+      setPage(urlPage)
+    }
+  }, [searchParams]) // Only run when searchParams change
+
   const nextPage = () => {
     if (page < totalPages) {
       setPage((prev) => prev + 1)
@@ -220,13 +228,7 @@ function MangaCollectionContent() {
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [filters, searchTerm, page, pageSize, sortConfig]) // Remove fetchMangas from dependencies
-
-  // Separate effect for page changes
-  useEffect(() => {
-    const activeFilters = Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== ""))
-    fetchMangas(activeFilters, searchTerm, page, pageSize, sortConfig.key, sortConfig.direction)
-  }, [page]) // Only depend on page changes
+  }, [filters, searchTerm, page, pageSize, sortConfig, fetchMangas]) // Add fetchMangas back to dependencies
 
   // Clear all filters
   const clearFilters = () => {
@@ -1393,7 +1395,7 @@ function MangaCollectionContent() {
                 <DropdownMenuItem onClick={() => handleSort("autor")}>
                   Autor {getSortIndicator("autor")}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleSort("band")}>Band {getSortIndicator("band")}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort("band")}>Band {getSortIndicator("band")} </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSort("genre")}>
                   Genre {getSortIndicator("genre")}
                 </DropdownMenuItem>
